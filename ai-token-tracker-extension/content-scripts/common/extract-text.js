@@ -125,6 +125,125 @@ const AIExtractText = (() => {
    * @param {string} site - Model identifier ('claude', 'chatgpt', 'gemini').
    * @param {Array<{role: string, content: string}>} messages
    */
+  /**
+   * Inject or update an on-page token usage widget below the chat input box.
+   */
+  function updateOnPageWidget(site, tokenCount) {
+    // 1. Find input area element
+    let inputEl = null;
+    const inputSelectors = [
+      '#prompt-textarea',
+      '[contenteditable="true"]',
+      'div.ProseMirror',
+      'rich-textarea',
+      'textarea',
+      '[role="textbox"]'
+    ];
+    
+    for (const sel of inputSelectors) {
+      inputEl = document.querySelector(sel);
+      if (inputEl) break;
+    }
+    
+    if (!inputEl) return;
+    
+    // 2. Find closest wrapper container to append the widget
+    let wrapper = null;
+    if (site === 'claude') {
+      wrapper = inputEl.closest('fieldset') || inputEl.closest('div[class*="input"]') || inputEl.parentElement;
+    } else if (site === 'chatgpt') {
+      wrapper = inputEl.closest('div.flex.w-full.flex-col') || inputEl.closest('form') || inputEl.parentElement;
+    } else if (site === 'gemini') {
+      wrapper = inputEl.closest('div[class*="input-area"]') || inputEl.closest('rich-textarea') || inputEl.parentElement;
+    }
+    
+    if (!wrapper) return;
+    
+    // 3. Create widget if it doesn't exist
+    let widget = wrapper.querySelector('.ai-tracker-widget');
+    if (!widget) {
+      widget = document.createElement('div');
+      widget.className = 'ai-tracker-widget';
+      widget.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 6px 12px;
+        margin-top: 8px;
+        font-size: 11px;
+        font-family: inherit;
+        color: currentColor;
+        opacity: 0.8;
+        background: rgba(120, 120, 120, 0.05);
+        border: 1px solid rgba(120, 120, 120, 0.12);
+        border-radius: 6px;
+        width: 100%;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+      `;
+      
+      widget.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span class="widget-icon">🟢</span>
+          <span style="font-weight: 500;">Tokens: <strong class="widget-tokens" style="font-weight: 700;">0</strong> / <span class="widget-limit">0</span></span>
+          <span class="widget-percent" style="font-weight: 600; padding: 1px 5px; border-radius: 4px; font-size: 10px;">0%</span>
+        </div>
+        <div style="flex: 1; height: 3px; background: rgba(120, 120, 120, 0.2); border-radius: 1.5px; overflow: hidden; max-width: 80px; margin-left: auto;">
+          <div class="widget-bar" style="width: 0%; height: 100%; background: #22C55E; border-radius: 1.5px; transition: width 0.3s ease, background-color 0.3s;"></div>
+        </div>
+      `;
+      
+      wrapper.appendChild(widget);
+    }
+    
+    // 4. Update widget values
+    const limit = typeof AIModelLimits !== 'undefined'
+      ? AIModelLimits.getLimit(site)
+      : 128000;
+      
+    const percent = Math.min(Math.round((tokenCount / limit) * 100), 100);
+    
+    const tokensEl = widget.querySelector('.widget-tokens');
+    const limitEl = widget.querySelector('.widget-limit');
+    const percentEl = widget.querySelector('.widget-percent');
+    const barEl = widget.querySelector('.widget-bar');
+    const iconEl = widget.querySelector('.widget-icon');
+    
+    if (tokensEl) tokensEl.textContent = tokenCount.toLocaleString();
+    if (limitEl) limitEl.textContent = (limit / 1000).toFixed(0) + 'K';
+    if (percentEl) {
+      percentEl.textContent = `${percent}%`;
+      
+      // Color-coding updates
+      let badgeBg, badgeColor, barColor, icon;
+      if (percent < 60) {
+        badgeBg = 'rgba(34, 197, 94, 0.12)';
+        badgeColor = '#22C55E';
+        barColor = '#22C55E';
+        icon = '🟢';
+      } else if (percent < 85) {
+        badgeBg = 'rgba(245, 158, 11, 0.12)';
+        badgeColor = '#F59E0B';
+        barColor = '#F59E0B';
+        icon = '🟡';
+      } else {
+        badgeBg = 'rgba(239, 68, 68, 0.12)';
+        badgeColor = '#EF4444';
+        barColor = '#EF4444';
+        icon = '🔴';
+      }
+      
+      percentEl.style.backgroundColor = badgeBg;
+      percentEl.style.color = badgeColor;
+      if (barEl) {
+        barEl.style.width = `${percent}%`;
+        barEl.style.backgroundColor = barColor;
+      }
+      if (iconEl) iconEl.textContent = icon;
+    }
+  }
+
   function sendToBackground(site, messages) {
     if (!messages) return;
 
@@ -132,6 +251,13 @@ const AIExtractText = (() => {
     const tokenCount = typeof AITokenizer !== 'undefined'
       ? AITokenizer.estimateTokensForMessages(messages)
       : 0;
+
+    // Update on-page widget
+    try {
+      updateOnPageWidget(site, tokenCount);
+    } catch (e) {
+      console.warn(`${LOG_PREFIX} Error updating widget:`, e);
+    }
 
     const payload = {
       type: 'CONVERSATION_UPDATE',
