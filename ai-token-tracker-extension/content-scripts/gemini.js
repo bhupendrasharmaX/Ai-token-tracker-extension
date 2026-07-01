@@ -233,14 +233,24 @@
     try {
       let inputEl = null;
 
-      // First try standard selectors
-      try {
-        inputEl = await AIDomObserver.waitForElement(INPUT_SELECTORS, 5000);
-      } catch (e) {
-        console.log(`${LOG_PREFIX} Standard input not found, trying shadow DOM...`);
+      // 1. Try to find ql-editor or editable element directly under rich-textarea shadow root (Gemini's main element)
+      const richTextarea = document.querySelector('rich-textarea');
+      if (richTextarea && richTextarea.shadowRoot) {
+        inputEl = richTextarea.shadowRoot.querySelector('.ql-editor') || 
+                  richTextarea.shadowRoot.querySelector('[contenteditable="true"]') ||
+                  richTextarea.shadowRoot.querySelector('textarea');
       }
 
-      // Try shadow DOM if standard didn't work
+      // 2. Fallback: Search standard selectors wait
+      if (!inputEl) {
+        try {
+          inputEl = await AIDomObserver.waitForElement(INPUT_SELECTORS, 5000);
+        } catch (e) {
+          console.log(`${LOG_PREFIX} Standard input not found, trying shadow DOM search...`);
+        }
+      }
+
+      // 3. Fallback: Search all elements and shadow DOMs
       if (!inputEl) {
         for (const sel of INPUT_SELECTORS) {
           const deepResults = deepQuerySelectorAll(document.body, sel);
@@ -251,17 +261,37 @@
         }
       }
 
+      // 4. Fallback: If still pointing to outer rich-textarea, pierce it
+      if (inputEl && inputEl.tagName.toLowerCase() === 'rich-textarea' && inputEl.shadowRoot) {
+        const inner = inputEl.shadowRoot.querySelector('.ql-editor') || 
+                      inputEl.shadowRoot.querySelector('[contenteditable="true"]') ||
+                      inputEl.shadowRoot.querySelector('textarea');
+        if (inner) {
+          inputEl = inner;
+        }
+      }
+
       if (!inputEl) {
         console.error(`${LOG_PREFIX} Could not find input element`);
         return;
       }
 
-      console.log(`${LOG_PREFIX} Found input element:`, inputEl.tagName);
+      console.log(`${LOG_PREFIX} Found input element for injection:`, inputEl.tagName, inputEl.className);
 
       // Handle different input types
-      if (inputEl.getAttribute('contenteditable') === 'true') {
+      if (inputEl.getAttribute('contenteditable') === 'true' || inputEl.classList.contains('ql-editor')) {
         inputEl.focus();
-        inputEl.textContent = text;
+        inputEl.innerHTML = ''; // Clear first to prevent duplication
+        
+        // Split text by lines and construct paragraphs to match Quill editor's format (prevent freeze)
+        const paragraphs = text.split('\n').map(line => {
+          const p = document.createElement('p');
+          p.textContent = line || '\n'; // Keep empty lines
+          return p;
+        });
+        
+        paragraphs.forEach(p => inputEl.appendChild(p));
+        
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));
         inputEl.dispatchEvent(new Event('change', { bubbles: true }));
       } else if (inputEl.tagName === 'TEXTAREA' || inputEl.tagName === 'INPUT') {
@@ -269,7 +299,6 @@
         inputEl.value = text;
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));
       } else {
-        // For custom web components, try setting innerHTML or innerText
         inputEl.focus();
         inputEl.innerText = text;
         inputEl.dispatchEvent(new Event('input', { bubbles: true }));

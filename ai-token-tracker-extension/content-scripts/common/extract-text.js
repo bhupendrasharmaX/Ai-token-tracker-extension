@@ -147,33 +147,39 @@ const AIExtractText = (() => {
     
     if (!inputEl) return;
     
-    // 2. Find closest wrapper container and reference element to append the widget
+    // 2. Pierce shadow DOM boundaries to get to the light DOM host element
+    let hostEl = inputEl;
+    while (hostEl && hostEl.getRootNode() && hostEl.getRootNode().host) {
+      hostEl = hostEl.getRootNode().host;
+    }
+    
+    // 3. Find closest wrapper container and reference element to append the widget
     let wrapper = null;
     let referenceEl = null;
     
     if (site === 'claude') {
-      const inputContainer = inputEl.closest('fieldset') || inputEl.closest('div[class*="input-container"]');
+      const inputContainer = hostEl.closest('fieldset') || hostEl.closest('div[class*="input-container"]');
       if (inputContainer) {
         wrapper = inputContainer.parentElement;
         referenceEl = inputContainer.nextSibling;
       } else {
-        wrapper = inputEl.parentElement;
+        wrapper = hostEl.parentElement;
       }
     } else if (site === 'chatgpt') {
-      const form = inputEl.closest('form');
+      const form = hostEl.closest('form');
       if (form) {
         wrapper = form.parentElement;
         referenceEl = form.nextSibling;
       } else {
-        wrapper = inputEl.parentElement;
+        wrapper = hostEl.parentElement;
       }
     } else if (site === 'gemini') {
-      const inputContainer = inputEl.closest('rich-textarea') || inputEl.closest('div[class*="input-area"]');
+      const inputContainer = hostEl.closest('rich-textarea') || hostEl.closest('div[class*="input-area"]') || hostEl;
       if (inputContainer) {
         wrapper = inputContainer.parentElement;
         referenceEl = inputContainer.nextSibling;
       } else {
-        wrapper = inputEl.parentElement;
+        wrapper = hostEl.parentElement;
       }
     }
     
