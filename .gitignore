@@ -1,0 +1,18 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+node_modules/
+*.log
+
+# Helper scripts (not part of extension)
+generate-icons.ps1
+resize-icon.ps1

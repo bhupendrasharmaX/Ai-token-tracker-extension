@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Token Tracker — Settings</title>
+  <style>
+    /* ═══════════════════════════════════════════════
+       Options Page — Inline Styles (full-page)
+       ═══════════════════════════════════════════════ */
+    :root {
+      --bg-primary: #0B0B10;
+      --bg-secondary: #111118;
+      --bg-card: rgba(24, 24, 34, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-focus: rgba(139, 92, 246, 0.5);
+      --text-primary: #F0F0F5;
+      --text-secondary: #9CA3AF;
+      --text-muted: #6B7280;
+      --accent: #8B5CF6;
+      --accent-dim: rgba(139, 92, 246, 0.12);
+      --accent-hover: #9D6FFF;
+      --status-green: #22C55E;
+      --status-red: #EF4444;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .options-container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    /* Header */
+    .options-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: white;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .options-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .options-header p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Sections */
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(12px);
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Form elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-sublabel {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    select {
+      width: 100%;
+      height: 42px;
+      padding: 0 14px;
+      font-family: var(--font-main);
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    /* Model limits table */
+    .limits-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .limits-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 8px 10px;
+    }
+
+    .limits-table td {
+      padding: 6px 8px;
+    }
+
+    .limits-table tr {
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .limits-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .limits-table input[type="number"] {
+      height: 36px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .model-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .model-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Threshold slider */
+    .threshold-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .threshold-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--status-green) 0%, #F59E0B 50%, var(--status-red) 100%);
+      outline: none;
+    }
+
+    .threshold-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid var(--bg-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .threshold-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .threshold-value {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      min-width: 50px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    /* Radio & Checkbox */
+    .toggle-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .toggle-item:hover {
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .toggle-item input[type="radio"],
+    .toggle-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .toggle-item label {
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .toggle-item .toggle-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .toggle-item .toggle-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .lastN-input {
+      width: 70px;
+      height: 36px;
+      text-align: center;
+      font-family: var(--font-mono);
+    }
+
+    /* Model order */
+    .order-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      transition: all 0.15s;
+    }
+
+    .order-item:hover {
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .order-num {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      min-width: 20px;
+    }
+
+    .order-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .order-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .order-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+    }
+
+    .order-btn:hover:not(:disabled) {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .order-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Actions */
+    .actions-bar {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      justify-content: space-between;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      font-family: var(--font-main);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+      color: white;
+      box-shadow: 0 2px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #9D6FFF, #8B5CF6);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.1);
+      color: var(--text-primary);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--status-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      padding: 14px 28px;
+      background: var(--status-green);
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.error {
+      background: var(--status-red);
+    }
+  </style>
+</head>
+<body>
+  <div class="options-container">
+    <!-- Header -->
+    <div class="options-header">
+      <div class="header-icon">AT</div>
+      <div>
+        <h1>Settings</h1>
+        <p>Configure your AI Token Tracker & Switcher</p>
+      </div>
+    </div>
+
+    <!-- Section: Model Context Limits -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        Model Context Limits
+      </div>
+
+      <table class="limits-table">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Context Window (tokens)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="model-badge">
+                <span class="model-dot" style="background:#D97706"></span>
+                Claude
+              </span>
+            </td>
+            <td>
+              <input type="number" id="limit-claude" min="1000" step="1000" value="200000">
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="model-badge">
+                <span class="model-dot" style="background:#10A37F"></span>
+                ChatGPT
+              </span>
+            </td>
+            <td>
+              <input type="number" id="limit-chatgpt" min="1000" step="1000" value="128000">
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span class="model-badge">
+                <span class="model-dot" style="background:#4285F4"></span>
+                Gemini
+              </span>
+            </td>
+            <td>
+              <input type="number" id="limit-gemini" min="1000" step="1000" value="1000000">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section: Switch Threshold -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+        </svg>
+        Switch Threshold
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Auto-switch when context usage reaches:</label>
+        <div class="threshold-container">
+          <input type="range" id="threshold" class="threshold-slider" min="50" max="99" value="90">
+          <span class="threshold-value" id="threshold-display">90%</span>
+        </div>
+        <span class="form-sublabel">The extension will trigger a handoff when token usage exceeds this percentage of the model's context limit.</span>
+      </div>
+    </div>
+
+    <!-- Section: Model Rotation Order -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+        </svg>
+        Model Rotation Order
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">When switching, cycle through models in this order:</label>
+        <div class="order-list" id="model-order-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Handoff Settings -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        Handoff Configuration
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Conversation Transfer Mode</label>
+        <div class="toggle-group">
+          <div class="toggle-item">
+            <input type="radio" name="handoff-mode" id="mode-full" value="full" checked>
+            <label for="mode-full">
+              <div class="toggle-title">Full Transcript</div>
+              <div class="toggle-desc">Transfer the entire conversation to the next model.</div>
+            </label>
+          </div>
+          <div class="toggle-item">
+            <input type="radio" name="handoff-mode" id="mode-lastN" value="lastN">
+            <label for="mode-lastN">
+              <div class="toggle-title">Last N Messages</div>
+              <div class="toggle-desc">Only transfer the most recent messages.</div>
+            </label>
+            <input type="number" id="lastN-value" class="lastN-input" min="2" max="100" value="10" disabled>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Auto-Submit</label>
+        <div class="toggle-group">
+          <div class="toggle-item">
+            <input type="checkbox" id="auto-submit">
+            <label for="auto-submit">
+              <div class="toggle-title">Automatically send after injection</div>
+              <div class="toggle-desc">When enabled, the handoff text will be submitted immediately. ⚠️ Use with caution.</div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions-bar">
+      <button class="btn btn-danger" id="reset-btn">Reset Defaults</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" id="save-btn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast">Settings saved!</div>
+
+  <script src="options.js"></script>
+</body>
+</html>
