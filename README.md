@@ -61,7 +61,7 @@ To load and use this extension in your browser:
   ```bash
   git clone https://github.com/bhupendrasharmaX/Ai-token-tracker-extension.git
   ```
-- **Option B (ZIP)**: Click the green **Code** button at the top right of this GitHub page, select **Download ZIP**, and extract it on your computer.
+- **Option B (Direct ZIP Download)**: Click here to [**Download the Extension ZIP file**](https://github.com/bhupendrasharmaX/Ai-token-tracker-extension/archive/refs/heads/main.zip) directly, or download it via the green **Code** button at the top right of the page and extract it.
 
 ### 2. Install in Google Chrome (or any Chromium browser)
 1. Open Google Chrome.
