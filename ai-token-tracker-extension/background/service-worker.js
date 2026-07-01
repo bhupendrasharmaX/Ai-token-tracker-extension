@@ -370,11 +370,7 @@ function persistState() {
   persistTimer = setTimeout(() => {
     const statesObj = {};
     for (const [tabId, state] of conversationState) {
-      // Don't persist full messages to storage (too large)
-      statesObj[tabId] = {
-        ...state,
-        messages: [] // Clear messages for storage — they'll be re-extracted
-      };
+      statesObj[tabId] = state;
     }
     chrome.storage.local.set({ conversationStates: statesObj });
   }, 2000);
