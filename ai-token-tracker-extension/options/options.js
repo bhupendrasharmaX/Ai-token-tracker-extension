@@ -25,7 +25,10 @@
       chatgpt: 128000,
       gemini: 1000000
     },
-    enabled: true
+    enabled: true,
+    claudeApiKey: '',
+    claudeUsageMode: 'estimated',
+    placeholderCacheTtl: 300
   };
 
   const MODEL_INFO = {
@@ -51,6 +54,10 @@
     modeLastN: document.getElementById('mode-lastN'),
     lastNValue: document.getElementById('lastN-value'),
     autoSubmit: document.getElementById('auto-submit'),
+    claudeUsageMode: document.getElementById('claude-usage-mode'),
+    claudeApiKey: document.getElementById('claude-api-key'),
+    apiKeyGroup: document.getElementById('api-key-group'),
+    cacheTtl: document.getElementById('cache-ttl'),
     saveBtn: document.getElementById('save-btn'),
     resetBtn: document.getElementById('reset-btn'),
     toast: document.getElementById('toast'),
@@ -105,6 +112,20 @@
 
     // Auto-submit
     els.autoSubmit.checked = currentSettings.autoSubmit || false;
+
+    // Claude API settings
+    els.claudeUsageMode.value = currentSettings.claudeUsageMode || DEFAULTS.claudeUsageMode;
+    els.claudeApiKey.value = currentSettings.claudeApiKey || '';
+    
+    // Toggle api key visibility
+    if (els.claudeUsageMode.value === 'api') {
+      els.apiKeyGroup.style.display = 'block';
+    } else {
+      els.apiKeyGroup.style.display = 'none';
+    }
+
+    // Cache TTL
+    els.cacheTtl.value = (currentSettings.placeholderCacheTtl || DEFAULTS.placeholderCacheTtl) / 60;
   }
 
   // ═══════════════════════════════════════════════
@@ -125,6 +146,16 @@
     els.modeLastN.addEventListener('change', () => {
       els.lastNValue.disabled = false;
       els.lastNValue.focus();
+    });
+
+    // Toggle API Key input display on Claude Usage Mode change
+    els.claudeUsageMode.addEventListener('change', () => {
+      if (els.claudeUsageMode.value === 'api') {
+        els.apiKeyGroup.style.display = 'block';
+        els.claudeApiKey.focus();
+      } else {
+        els.apiKeyGroup.style.display = 'none';
+      }
     });
 
     // Save
@@ -197,6 +228,7 @@
     const limitGemini = parseInt(els.limitGemini.value);
     const threshold = parseInt(els.threshold.value);
     const lastN = parseInt(els.lastNValue.value);
+    const cacheTtl = parseInt(els.cacheTtl.value);
 
     if (isNaN(limitClaude) || limitClaude < 1000) {
       showToast('Claude limit must be at least 1,000 tokens.', true);
@@ -218,6 +250,10 @@
       showToast('Last N must be at least 2 messages.', true);
       return;
     }
+    if (isNaN(cacheTtl) || cacheTtl < 1 || cacheTtl > 1440) {
+      showToast('Cache TTL must be between 1 and 1440 minutes (24 hours).', true);
+      return;
+    }
 
     const newSettings = {
       threshold,
@@ -230,7 +266,10 @@
         chatgpt: limitChatgpt,
         gemini: limitGemini
       },
-      enabled: true
+      enabled: true,
+      claudeUsageMode: els.claudeUsageMode.value,
+      claudeApiKey: els.claudeApiKey.value.trim(),
+      placeholderCacheTtl: cacheTtl * 60
     };
 
     console.log(`${LOG_PREFIX} Saving settings:`, newSettings);

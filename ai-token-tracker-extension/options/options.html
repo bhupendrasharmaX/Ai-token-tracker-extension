@@ -596,6 +596,49 @@
       </div>
     </div>
 
+    <!-- Section: Claude API Integration -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Claude API Integration
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="claude-usage-mode">Usage Statistics Source</label>
+        <select id="claude-usage-mode" style="width: 100%; padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; box-sizing: border-box; outline: none; margin-top: 4px;">
+          <option value="estimated">Estimated (Locally Computed)</option>
+          <option value="api">API-based (Pull Live Quota limits from Anthropic)</option>
+        </select>
+        <span class="form-sublabel">Select whether to estimate token consumption locally, or request your official developer account limits from Anthropic.</span>
+      </div>
+
+      <div class="form-group" id="api-key-group">
+        <label class="form-label" for="claude-api-key">Anthropic API Key</label>
+        <input type="password" id="claude-api-key" placeholder="sk-ant-..." style="width: 100%; padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; box-sizing: border-box; outline: none; margin-top: 4px;">
+        <span class="form-sublabel">Needed only if "API-based" usage is selected. Stored securely on your local device.</span>
+      </div>
+    </div>
+
+    <!-- Section: Cache Expiry Settings -->
+    <div class="section">
+      <div class="section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Cache Configuration
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="cache-ttl">ChatGPT / Gemini Cache TTL (Minutes)</label>
+        <input type="number" id="cache-ttl" min="1" max="1440" value="5" style="width: 100px; padding: 8px; border-radius: 6px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: white; box-sizing: border-box; outline: none; margin-top: 4px;">
+        <span class="form-sublabel">The length of time to display the conversation cache timer before it expires. Claude uses Anthropic's fixed 5-minute prompt cache.</span>
+      </div>
+    </div>
+
     <!-- Actions -->
     <div class="actions-bar">
       <button class="btn btn-danger" id="reset-btn">Reset Defaults</button>

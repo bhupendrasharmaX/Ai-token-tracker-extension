@@ -10,7 +10,8 @@
 importScripts(
   '../lib/tokenizer.js',
   '../lib/model-limits.js',
-  '../lib/handoff.js'
+  '../lib/handoff.js',
+  '../lib/usage-tracker.js'
 );
 
 const LOG_PREFIX = '[AI-Tracker][SW]';
@@ -35,7 +36,10 @@ let settings = {
   handoffMode: 'full',   // 'full' or 'lastN'
   lastN: 10,
   customLimits: {},       // { modelId: number }
-  enabled: true
+  enabled: true,
+  claudeApiKey: '',
+  claudeUsageMode: 'estimated', // 'estimated' or 'api'
+  placeholderCacheTtl: 300       // in seconds
 };
 
 // ═══════════════════════════════════════════════
@@ -97,6 +101,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ success: true });
       break;
 
+    case 'GET_USAGE':
+      handleGetUsage(message, sendResponse);
+      return true; // Keep channel open for async response
+
     case 'GET_ALL_STATES':
       sendResponse({
         states: Object.fromEntries(conversationState)
@@ -122,6 +130,15 @@ function handleConversationUpdate(message, tab) {
 
   const { site, messages, tokenCount, messageCount, timestamp } = message;
   const tabId = tab.id;
+
+  // Track token usage difference and log to usage tracker
+  const oldState = conversationState.get(tabId);
+  const oldTokens = oldState ? oldState.tokenCount : 0;
+  const tokenDiff = Math.max(0, tokenCount - oldTokens);
+  
+  if (tokenDiff > 0) {
+    AIUsageTracker.logActivity(site, tokenDiff, 1);
+  }
 
   // Get the model's context limit
   const limit = AIModelLimits.getLimit(site, settings.customLimits);
@@ -158,6 +175,33 @@ function handleConversationUpdate(message, tab) {
   if (settings.enabled && percent >= settings.threshold) {
     console.log(`${LOG_PREFIX} ⚠️ Threshold reached (${percent}% >= ${settings.threshold}%)! Triggering handoff...`);
     triggerAutoHandoff(tabId, state);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Usage Retrieval Handler
+// ═══════════════════════════════════════════════
+
+async function handleGetUsage(message, sendResponse) {
+  const modelId = message.modelId;
+  try {
+    const stats = await AIUsageTracker.getUsageStats(modelId, settings);
+    
+    // Find active tab for this model to get lastActivityTime
+    const activeState = Array.from(conversationState.values()).find(s => s.site === modelId);
+    let cacheRemaining = 0;
+    if (activeState && activeState.lastUpdated) {
+      cacheRemaining = AIUsageTracker.getCacheRemainingSeconds(
+        modelId, 
+        activeState.lastUpdated, 
+        settings.placeholderCacheTtl
+      );
+    }
+
+    sendResponse({ success: true, stats, cacheRemaining });
+  } catch (e) {
+    console.error(`${LOG_PREFIX} Error handling GET_USAGE:`, e);
+    sendResponse({ error: e.message });
   }
 }
 

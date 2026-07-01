@@ -60,6 +60,7 @@
   let currentSite = null;
   let settings = null;
   let pollInterval = null;
+  let cacheCountdownInterval = null;
 
   // ═══════════════════════════════════════════════
   // Initialization
@@ -218,6 +219,9 @@
 
     // Populate target model dropdown (excluding current)
     populateModelDropdown(state.site);
+
+    // Update usage and cache details
+    updateUsageAndCacheUI(state.site);
   }
 
   function updateProgressRing(percent) {
@@ -334,11 +338,123 @@
   }
 
   // ═══════════════════════════════════════════════
+  // Usage and Cache Indicators
+  // ═══════════════════════════════════════════════
+
+  async function updateUsageAndCacheUI(modelId) {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: 'GET_USAGE',
+        modelId: modelId
+      });
+
+      if (response && response.success) {
+        const { stats, cacheRemaining } = response;
+        
+        // 1. Update Cache Timer Countdown
+        clearInterval(cacheCountdownInterval);
+        const cacheEl = document.getElementById('cache-indicator');
+        const cacheTextEl = document.getElementById('cache-timer-text');
+        
+        if (cacheRemaining > 0) {
+          cacheEl.style.display = 'flex';
+          cacheEl.classList.remove('expired');
+          
+          let secondsLeft = cacheRemaining;
+          const updateDisplay = () => {
+            if (secondsLeft <= 0) {
+              cacheEl.classList.add('expired');
+              cacheTextEl.textContent = 'Cache Expired';
+              clearInterval(cacheCountdownInterval);
+              return;
+            }
+            const mins = Math.floor(secondsLeft / 60);
+            const secs = secondsLeft % 60;
+            cacheTextEl.textContent = `Cache Status: Active (${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')})`;
+            secondsLeft--;
+          };
+          updateDisplay();
+          cacheCountdownInterval = setInterval(updateDisplay, 1000);
+        } else {
+          cacheEl.style.display = 'flex';
+          cacheEl.classList.add('expired');
+          cacheTextEl.textContent = 'Not Cached';
+        }
+
+        // 2. Update Usage Progress Bars & Reset Countdowns
+        const sessionFill = document.getElementById('session-usage-fill');
+        const sessionReset = document.getElementById('session-reset-display');
+        const sessionTokens = document.getElementById('session-tokens-display');
+        const sessionPct = document.getElementById('session-pct-display');
+        
+        const weeklyFill = document.getElementById('weekly-usage-fill');
+        const weeklyReset = document.getElementById('weekly-reset-display');
+        const weeklyTokens = document.getElementById('weekly-tokens-display');
+        const weeklyPct = document.getElementById('weekly-pct-display');
+
+        // Session
+        const sTokens = stats.sessionTokens || 0;
+        const sLimit = stats.sessionLimit || 1;
+        const sPct = Math.min(100, Math.round((sTokens / sLimit) * 100));
+        
+        sessionFill.style.width = `${sPct}%`;
+        sessionPct.textContent = `${sPct}%`;
+        sessionTokens.textContent = `${sTokens.toLocaleString()} / ${sLimit.toLocaleString()} tokens${stats.apiActive ? ' (API)' : ''}`;
+        
+        if (stats.sessionResetTime > 0) {
+          sessionReset.textContent = `resets in ${formatTimeMs(stats.sessionResetTime)}`;
+        } else {
+          sessionReset.textContent = 'resets in 0s';
+        }
+
+        // Weekly
+        const wTokens = stats.weeklyTokens || 0;
+        const wLimit = stats.weeklyLimit || 1;
+        const wPct = Math.min(100, Math.round((wTokens / wLimit) * 100));
+        
+        weeklyFill.style.width = `${wPct}%`;
+        weeklyPct.textContent = `${wPct}%`;
+        weeklyTokens.textContent = `${wTokens.toLocaleString()} / ${wLimit.toLocaleString()} tokens`;
+        
+        if (stats.weeklyResetTime > 0) {
+          weeklyReset.textContent = `resets in ${formatTimeMs(stats.weeklyResetTime)}`;
+        } else {
+          weeklyReset.textContent = 'resets in 0s';
+        }
+      }
+    } catch (err) {
+      console.warn(`${LOG_PREFIX} Error loading usage stats:`, err);
+    }
+  }
+
+  function formatTimeMs(ms) {
+    const totalSecs = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    
+    if (hours > 24) {
+      const days = Math.floor(hours / 24);
+      const remHours = hours % 24;
+      return `${days}d ${remHours}h`;
+    }
+    
+    if (hours > 0) {
+      return `${hours}h ${mins}m`;
+    }
+    if (mins > 0) {
+      return `${mins}m ${secs}s`;
+    }
+    return `${secs}s`;
+  }
+
+  // ═══════════════════════════════════════════════
   // Cleanup
   // ═══════════════════════════════════════════════
 
   window.addEventListener('unload', () => {
     if (pollInterval) clearInterval(pollInterval);
+    if (cacheCountdownInterval) clearInterval(cacheCountdownInterval);
   });
 
   // Start

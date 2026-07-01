@@ -77,6 +77,12 @@
         </div>
       </div>
 
+      <!-- Cache Timer Indicator -->
+      <div class="cache-indicator" id="cache-indicator" style="display: none;">
+        <span class="cache-pulse"></span>
+        <span class="cache-text" id="cache-timer-text">Cache Status: Active (05:00)</span>
+      </div>
+
       <!-- Token Stats -->
       <div class="stats-grid">
         <div class="stat-card">
@@ -94,6 +100,43 @@
         <div class="stat-card">
           <div class="stat-value" id="threshold-val">90%</div>
           <div class="stat-label">Threshold</div>
+        </div>
+      </div>
+
+      <!-- Usage Bars Section -->
+      <div class="usage-section">
+        <div class="usage-header">
+          <span>Quota Usage Status</span>
+        </div>
+        
+        <!-- Session Usage -->
+        <div class="usage-item">
+          <div class="usage-info">
+            <span class="usage-name">Session (5h) Usage</span>
+            <span class="usage-reset" id="session-reset-display">resets in 0s</span>
+          </div>
+          <div class="usage-bar-bg">
+            <div class="usage-bar-fill" id="session-usage-fill" style="width: 0%;"></div>
+          </div>
+          <div class="usage-details">
+            <span id="session-tokens-display">0 / 1,000,000 tokens</span>
+            <span class="usage-pct" id="session-pct-display">0%</span>
+          </div>
+        </div>
+
+        <!-- Weekly Usage -->
+        <div class="usage-item">
+          <div class="usage-info">
+            <span class="usage-name">Weekly (7d) Usage</span>
+            <span class="usage-reset" id="weekly-reset-display">resets in 0s</span>
+          </div>
+          <div class="usage-bar-bg">
+            <div class="usage-bar-fill" id="weekly-usage-fill" style="width: 0%;"></div>
+          </div>
+          <div class="usage-details">
+            <span id="weekly-tokens-display">0 / 10,000,000 tokens</span>
+            <span class="usage-pct" id="weekly-pct-display">0%</span>
+          </div>
         </div>
       </div>
     </div>

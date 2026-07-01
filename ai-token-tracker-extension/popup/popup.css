@@ -579,3 +579,120 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* ═══════════════════════════════════════════════
+   Cache Indicator
+   ═══════════════════════════════════════════════ */
+.cache-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: -4px auto 14px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  max-width: max-content;
+  box-sizing: border-box;
+}
+
+.cache-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--status-green);
+  box-shadow: 0 0 8px var(--status-green);
+  animation: cacheBlink 1.5s ease-in-out infinite;
+}
+
+@keyframes cacheBlink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.cache-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cache-indicator.expired .cache-pulse {
+  background-color: var(--text-muted) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.cache-indicator.expired .cache-text {
+  color: var(--text-muted) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   Quota Usage Section
+   ═══════════════════════════════════════════════ */
+.usage-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usage-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+
+.usage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.usage-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.usage-name {
+  color: var(--text-secondary);
+}
+
+.usage-reset {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.usage-bar-bg {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.usage-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-purple) 0%, #A78BFA 100%);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.usage-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.usage-pct {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
