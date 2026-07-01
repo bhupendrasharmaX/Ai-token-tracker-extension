@@ -193,29 +193,53 @@ const AIExtractText = (() => {
       widget.className = 'ai-tracker-widget';
       widget.style.cssText = `
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 4px 8px;
-        margin: 6px auto 0;
+        flex-direction: column;
+        gap: 6px;
+        padding: 6px 12px;
+        margin: 8px auto 4px;
         font-size: 11px;
         font-family: inherit;
         color: currentColor;
-        opacity: 0.65;
+        opacity: 0.85;
         width: 100%;
         max-width: 768px;
         box-sizing: border-box;
         transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
       `;
       
       widget.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-          <span class="widget-icon">🟢</span>
-          <span style="font-weight: 500;">Tokens: <strong class="widget-tokens" style="font-weight: 700;">0</strong> / <span class="widget-limit">0</span></span>
-          <span class="widget-percent" style="font-weight: 600; padding: 1px 5px; border-radius: 4px; font-size: 10px;">0%</span>
+        <!-- Top Row: Conversation Tokens -->
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span class="widget-icon">🟢</span>
+            <span style="font-weight: 500;">Tokens: <strong class="widget-tokens" style="font-weight: 700;">0</strong> / <span class="widget-limit">0</span></span>
+            <span class="widget-percent" style="font-weight: 600; padding: 1px 5px; border-radius: 4px; font-size: 10px;">0%</span>
+          </div>
+          <div style="width: 80px; height: 3px; background: rgba(120, 120, 120, 0.2); border-radius: 1.5px; overflow: hidden; margin-left: auto;">
+            <div class="widget-bar" style="width: 0%; height: 100%; background: #22C55E; border-radius: 1.5px; transition: width 0.3s ease, background-color 0.3s;"></div>
+          </div>
         </div>
-        <div style="flex: 1; height: 3px; background: rgba(120, 120, 120, 0.2); border-radius: 1.5px; overflow: hidden; max-width: 80px; margin-left: auto;">
-          <div class="widget-bar" style="width: 0%; height: 100%; background: #22C55E; border-radius: 1.5px; transition: width 0.3s ease, background-color 0.3s;"></div>
+
+        <!-- Bottom Row: Usage Quota (Session & Weekly side-by-side) -->
+        <div class="widget-usage-row" style="display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 10px; opacity: 0.85; margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(120, 120, 120, 0.15);">
+          <!-- Session (Left) -->
+          <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+            <span style="white-space: nowrap;">Session: <strong class="widget-session-pct">0%</strong> <span class="widget-session-reset" style="opacity: 0.6; font-size: 9px;"></span></span>
+            <div style="flex: 1; max-width: 60px; height: 3px; background: rgba(120, 120, 120, 0.2); border-radius: 1.5px; overflow: hidden;">
+              <div class="widget-session-bar" style="width: 0%; height: 100%; background: #8B5CF6; border-radius: 1.5px; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+
+          <!-- Weekly (Right) -->
+          <div style="display: flex; align-items: center; gap: 6px; flex: 1; justify-content: flex-end;">
+            <div style="flex: 1; max-width: 60px; height: 3px; background: rgba(120, 120, 120, 0.2); border-radius: 1.5px; overflow: hidden; margin-left: auto;">
+              <div class="widget-weekly-bar" style="width: 0%; height: 100%; background: #A78BFA; border-radius: 1.5px; transition: width 0.3s ease;"></div>
+            </div>
+            <span style="white-space: nowrap;">Weekly: <strong class="widget-weekly-pct">0%</strong> <span class="widget-weekly-reset" style="opacity: 0.6; font-size: 9px; margin-left: 4px;"></span></span>
+          </div>
         </div>
       `;
       
@@ -271,6 +295,55 @@ const AIExtractText = (() => {
       }
       if (iconEl) iconEl.textContent = icon;
     }
+
+    // 5. Query and update Session & Weekly usage stats
+    chrome.runtime.sendMessage({
+      type: 'GET_USAGE',
+      modelId: site
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        // Background script not loaded or listening yet
+        return;
+      }
+      
+      if (response && response.success && response.stats) {
+        const stats = response.stats;
+        
+        const sessionBar = widget.querySelector('.widget-session-bar');
+        const sessionPct = widget.querySelector('.widget-session-pct');
+        const sessionReset = widget.querySelector('.widget-session-reset');
+        
+        const weeklyBar = widget.querySelector('.widget-weekly-bar');
+        const weeklyPct = widget.querySelector('.widget-weekly-pct');
+        const weeklyReset = widget.querySelector('.widget-weekly-reset');
+        
+        const formatResetText = (ms) => {
+          if (!ms || ms <= 0) return '';
+          const totalSecs = Math.floor(ms / 1000);
+          const hours = Math.floor(totalSecs / 3600);
+          const mins = Math.floor((totalSecs % 3600) / 60);
+          const secs = totalSecs % 60;
+          if (hours > 24) {
+            return `· resets in ${Math.floor(hours / 24)}d ${hours % 24}h`;
+          }
+          if (hours > 0) {
+            return `· resets in ${hours}h ${mins}m`;
+          }
+          if (mins > 0) {
+            return `· resets in ${mins}m`;
+          }
+          return `· resets in ${secs}s`;
+        };
+
+        if (sessionBar) sessionBar.style.width = `${stats.sessionPercent}%`;
+        if (sessionPct) sessionPct.textContent = `${stats.sessionPercent}%`;
+        if (sessionReset) sessionReset.textContent = formatResetText(stats.sessionResetTime);
+
+        if (weeklyBar) weeklyBar.style.width = `${stats.weeklyPercent}%`;
+        if (weeklyPct) weeklyPct.textContent = `${stats.weeklyPercent}%`;
+        if (weeklyReset) weeklyReset.textContent = formatResetText(stats.weeklyResetTime);
+      }
+    });
   }
 
   function sendToBackground(site, messages) {
