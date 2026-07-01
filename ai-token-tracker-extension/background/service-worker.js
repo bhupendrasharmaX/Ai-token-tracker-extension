@@ -389,19 +389,45 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   }
 });
 
+function resetTabState(tabId) {
+  console.log(`${LOG_PREFIX} Resetting state for tab ${tabId}`);
+  conversationState.delete(tabId);
+  handoffTriggered.delete(tabId);
+  updateBadge(tabId, 0);
+  persistState();
+}
+
+function isNewChatUrl(url, site) {
+  if (!url) return false;
+  const cleanUrl = url.split('?')[0].split('#')[0].replace(/\/$/, '');
+  
+  if (site === 'claude') {
+    return cleanUrl === 'https://claude.ai' || cleanUrl === 'https://claude.ai/new';
+  }
+  if (site === 'chatgpt') {
+    return cleanUrl === 'https://chatgpt.com' || cleanUrl === 'https://chat.openai.com';
+  }
+  if (site === 'gemini') {
+    return cleanUrl === 'https://gemini.google.com/app';
+  }
+  return false;
+}
+
 // Also watch for URL changes (new conversation on same tab)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url && conversationState.has(tabId)) {
-    const currentSite = conversationState.get(tabId).site;
+    const currentState = conversationState.get(tabId);
     const newSite = AIModelLimits.detectModel(changeInfo.url);
 
-    // If the site changed or URL significantly changed, reset state
-    if (currentSite !== newSite) {
-      console.log(`${LOG_PREFIX} Tab ${tabId} navigated away from ${currentSite}`);
-      conversationState.delete(tabId);
-      handoffTriggered.delete(tabId);
-      updateBadge(tabId, 0);
-      persistState();
+    // If the site changed, reset state
+    if (currentState.site !== newSite) {
+      console.log(`${LOG_PREFIX} Tab ${tabId} navigated away from ${currentState.site} to ${newSite}`);
+      resetTabState(tabId);
+    }
+    // If navigating to a new chat URL on the same site, reset state
+    else if (isNewChatUrl(changeInfo.url, currentState.site)) {
+      console.log(`${LOG_PREFIX} Tab ${tabId} started a new chat on ${currentState.site}`);
+      resetTabState(tabId);
     }
   }
 });

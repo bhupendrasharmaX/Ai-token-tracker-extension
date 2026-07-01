@@ -194,9 +194,7 @@
       }
     }
 
-    if (messages.length > 0) {
-      AIExtractText.sendToBackground(SITE_ID, messages);
-    }
+    AIExtractText.sendToBackground(SITE_ID, messages);
   }
 
   async function init() {

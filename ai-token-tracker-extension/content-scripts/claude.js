@@ -178,10 +178,7 @@
     }
 
     const messages = AIExtractText.extractMessages(messageContainer, siteConfig);
-    
-    if (messages.length > 0) {
-      AIExtractText.sendToBackground(SITE_ID, messages);
-    }
+    AIExtractText.sendToBackground(SITE_ID, messages);
   }
 
   // Start the observer

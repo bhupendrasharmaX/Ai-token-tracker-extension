@@ -126,7 +126,7 @@ const AIExtractText = (() => {
    * @param {Array<{role: string, content: string}>} messages
    */
   function sendToBackground(site, messages) {
-    if (!messages || messages.length === 0) return;
+    if (!messages) return;
 
     // Estimate tokens in content script
     const tokenCount = typeof AITokenizer !== 'undefined'
