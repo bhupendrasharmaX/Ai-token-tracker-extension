@@ -42,13 +42,13 @@
   ];
 
   const INPUT_SELECTORS = [
+    'rich-textarea .ql-editor',
+    'rich-textarea [contenteditable="true"]',
+    'rich-textarea textarea',
     'rich-textarea',                            // Gemini's custom textarea component
     '.ql-editor',                               // Quill editor (used internally)
-    '[contenteditable="true"]',
-    'textarea',
-    '[role="textbox"]',
-    'input[type="text"]',
     'div[class*="input-area"] [contenteditable]',
+    'div[class*="input"] [contenteditable]'
   ];
 
   // ═══════════════════════════════════════════════
@@ -233,26 +233,30 @@
     try {
       let inputEl = null;
 
-      // 1. Try to find ql-editor or editable element directly under rich-textarea shadow root (Gemini's main element)
-      const richTextarea = document.querySelector('rich-textarea');
-      if (richTextarea && richTextarea.shadowRoot) {
-        inputEl = richTextarea.shadowRoot.querySelector('.ql-editor') || 
-                  richTextarea.shadowRoot.querySelector('[contenteditable="true"]') ||
-                  richTextarea.shadowRoot.querySelector('textarea');
-      }
-
-      // 2. Fallback: Search standard selectors wait
-      if (!inputEl) {
-        try {
-          inputEl = await AIDomObserver.waitForElement(INPUT_SELECTORS, 5000);
-        } catch (e) {
-          console.log(`${LOG_PREFIX} Standard input not found, trying shadow DOM search...`);
+      // 1. Wait for rich-textarea to appear in the DOM (Gemini's main input component)
+      try {
+        const richTextarea = await AIDomObserver.waitForElement('rich-textarea', 8000);
+        if (richTextarea) {
+          console.log(`${LOG_PREFIX} Found rich-textarea, accessing shadow root...`);
+          // Try to access the shadowRoot with retry logic in case it takes a moment to initialize
+          for (let i = 0; i < 10; i++) {
+            if (richTextarea.shadowRoot) {
+              inputEl = richTextarea.shadowRoot.querySelector('.ql-editor') || 
+                        richTextarea.shadowRoot.querySelector('[contenteditable="true"]') ||
+                        richTextarea.shadowRoot.querySelector('textarea');
+              if (inputEl) break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
         }
+      } catch (e) {
+        console.log(`${LOG_PREFIX} rich-textarea not found, trying fallback deep search...`);
       }
 
-      // 3. Fallback: Search all elements and shadow DOMs
+      // 2. Fallback: Search all elements including shadow DOMs for ql-editor or editable areas
       if (!inputEl) {
-        for (const sel of INPUT_SELECTORS) {
+        const fallbacks = ['.ql-editor', '[contenteditable="true"]', 'textarea'];
+        for (const sel of fallbacks) {
           const deepResults = deepQuerySelectorAll(document.body, sel);
           if (deepResults.length > 0) {
             inputEl = deepResults[0];
@@ -261,7 +265,7 @@
         }
       }
 
-      // 4. Fallback: If still pointing to outer rich-textarea, pierce it
+      // 3. Fallback: If still pointing to outer rich-textarea, pierce it
       if (inputEl && inputEl.tagName.toLowerCase() === 'rich-textarea' && inputEl.shadowRoot) {
         const inner = inputEl.shadowRoot.querySelector('.ql-editor') || 
                       inputEl.shadowRoot.querySelector('[contenteditable="true"]') ||
