@@ -6,11 +6,11 @@
  * and manages badge display.
  */
 
-// Import shared libraries (paths relative to extension root in MV3)
+// Import shared libraries (relative to background script folder)
 importScripts(
-  'lib/tokenizer.js',
-  'lib/model-limits.js',
-  'lib/handoff.js'
+  '../lib/tokenizer.js',
+  '../lib/model-limits.js',
+  '../lib/handoff.js'
 );
 
 const LOG_PREFIX = '[AI-Tracker][SW]';
