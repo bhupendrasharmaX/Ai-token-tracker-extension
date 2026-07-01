@@ -147,20 +147,41 @@ const AIExtractText = (() => {
     
     if (!inputEl) return;
     
-    // 2. Find closest wrapper container to append the widget
+    // 2. Find closest wrapper container and reference element to append the widget
     let wrapper = null;
+    let referenceEl = null;
+    
     if (site === 'claude') {
-      wrapper = inputEl.closest('fieldset') || inputEl.closest('div[class*="input"]') || inputEl.parentElement;
+      const inputContainer = inputEl.closest('fieldset') || inputEl.closest('div[class*="input-container"]');
+      if (inputContainer) {
+        wrapper = inputContainer.parentElement;
+        referenceEl = inputContainer.nextSibling;
+      } else {
+        wrapper = inputEl.parentElement;
+      }
     } else if (site === 'chatgpt') {
-      wrapper = inputEl.closest('div.flex.w-full.flex-col') || inputEl.closest('form') || inputEl.parentElement;
+      const form = inputEl.closest('form');
+      if (form) {
+        wrapper = form.parentElement;
+        referenceEl = form.nextSibling;
+      } else {
+        wrapper = inputEl.parentElement;
+      }
     } else if (site === 'gemini') {
-      wrapper = inputEl.closest('div[class*="input-area"]') || inputEl.closest('rich-textarea') || inputEl.parentElement;
+      const inputContainer = inputEl.closest('rich-textarea') || inputEl.closest('div[class*="input-area"]');
+      if (inputContainer) {
+        wrapper = inputContainer.parentElement;
+        referenceEl = inputContainer.nextSibling;
+      } else {
+        wrapper = inputEl.parentElement;
+      }
     }
     
     if (!wrapper) return;
     
     // 3. Create widget if it doesn't exist
-    let widget = wrapper.querySelector('.ai-tracker-widget');
+    // Query within the specific parent to avoid matching widgets in other places
+    let widget = wrapper.querySelector(':scope > .ai-tracker-widget');
     if (!widget) {
       widget = document.createElement('div');
       widget.className = 'ai-tracker-widget';
@@ -169,16 +190,14 @@ const AIExtractText = (() => {
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 6px 12px;
-        margin-top: 8px;
+        padding: 4px 8px;
+        margin: 6px auto 0;
         font-size: 11px;
         font-family: inherit;
         color: currentColor;
-        opacity: 0.8;
-        background: rgba(120, 120, 120, 0.05);
-        border: 1px solid rgba(120, 120, 120, 0.12);
-        border-radius: 6px;
+        opacity: 0.65;
         width: 100%;
+        max-width: 768px;
         box-sizing: border-box;
         transition: all 0.3s ease;
       `;
@@ -194,7 +213,11 @@ const AIExtractText = (() => {
         </div>
       `;
       
-      wrapper.appendChild(widget);
+      if (referenceEl) {
+        wrapper.insertBefore(widget, referenceEl);
+      } else {
+        wrapper.appendChild(widget);
+      }
     }
     
     // 4. Update widget values
