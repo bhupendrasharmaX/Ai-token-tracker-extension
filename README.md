@@ -14,6 +14,8 @@ Additionally, it injects a **live on-page token widget** directly below the chat
 - 🟢🟡🔴 **Color-Coded Badges** — Visual indicators change colors (Green/Yellow/Red) based on usage intensity.
 - ⚙️ **Fully Customizable Options** — Change context limits, threshold percentage, target model rotation order, and handoff modes (Full Transcript vs. Last N Messages).
 - 💾 **Persistent Session Memory** — Keeps track of conversation progress even if the tab is reloaded or the browser service worker restarts.
+- ⏱️ **Active Cache Timer** — Live countdown in the popup for prompt caching (Claude's 5-minute Prompt Cache TTL, plus configurable placeholders for ChatGPT/Gemini).
+- 📊 **Rolling Usage Bars** — Tracks session (5-hour) and weekly (7-day) token consumption locally. Supports real-time API key integration for Claude developer limits!
 
 ---
 
@@ -37,7 +39,8 @@ Ai-token-tracker-extension/ (Repository Root)
 │    ├── lib/                         # Core libraries
 │    │    ├── tokenizer.js            # Heuristic token counting (~4 chars/token)
 │    │    ├── model-limits.js         # Limits configuration
-│    │    └── handoff.js              # Prompt generator
+│    │    ├── handoff.js              # Prompt generator
+│    │    └── usage-tracker.js        # Log rolling usage & Anthropic limits API
 │    ├── popup/                       # Browser action popup UI
 │    │    ├── popup.html
 │    │    ├── popup.css

@@ -15,6 +15,8 @@ A Chrome Extension (Manifest V3) that tracks token usage across **Claude**, **Ch
 - ⚙️ **Configurable** — Edit limits, threshold %, model order, and handoff mode
 - 🎨 **Premium Dark UI** — Glassmorphism popup with smooth animations
 - 💾 **Persistent State** — Survives tab reloads via chrome.storage.local
+- ⏱️ **Active Cache Timer** — Live countdown in the popup for prompt caching (Claude's 5-minute Prompt Cache TTL, plus configurable placeholders for ChatGPT/Gemini).
+- 📊 **Rolling Usage Bars** — Tracks session (5-hour) and weekly (7-day) token consumption locally. Supports real-time API key integration for Claude developer limits!
 - 🔍 **Debug Logging** — Console logs prefixed with `[AI-Tracker]` for easy filtering
 
 ## Supported Models
@@ -51,7 +53,8 @@ ai-token-tracker-extension/
 ├── lib/
 │   ├── tokenizer.js                 # Character-based token estimator
 │   ├── model-limits.js              # Model config (limits, URLs, etc.)
-│   └── handoff.js                   # Conversation transfer builder
+│   ├── handoff.js                   # Conversation transfer builder
+│   └── usage-tracker.js             # Log rolling usage & Anthropic limits API
 ├── popup/
 │   ├── popup.html                   # Extension popup UI
 │   ├── popup.css                    # Dark glassmorphism styles
